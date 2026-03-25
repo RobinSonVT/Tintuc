@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src *;">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Tin Tức</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Be Vietnam Pro',sans-serif;background:#0f1117;color:#e8ddd0;min-height:100vh;max-width:480px;margin:0 auto;overflow-x:hidden;}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:#ff6b35;border-radius:2px;}
+.header{background:linear-gradient(135deg,#1a0a00,#2d1200,#1a0505);padding:13px 16px 11px;border-bottom:1px solid #3a1a0a;position:sticky;top:0;z-index:100;}
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.htw{flex:1;min-width:0;}
+.app-title{font-family:'Noto Serif',serif;font-size:20px;font-weight:700;color:#ff6b35;display:flex;align-items:center;gap:7px;}
+.app-sub{font-size:10px;color:#8a7060;letter-spacing:.8px;text-transform:uppercase;margin-top:1px;}
+.last-upd{font-size:10px;color:#5a4a3a;margin-top:3px;}
+.rdot{width:7px;height:7px;border-radius:50%;background:#2a2d3a;display:inline-block;flex-shrink:0;}
+.rdot.on{background:#ff6b35;animation:blink .8s ease infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.pab{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:22px;border:none;cursor:pointer;font-family:'Be Vietnam Pro',sans-serif;font-size:12px;font-weight:700;transition:all .2s;white-space:nowrap;}
+.pab.idle   {background:linear-gradient(135deg,#1e3a55,#0e2035);color:#5ab8e8;border:1.5px solid #2a5070;}
+.pab.loading{background:#1a1d27;color:#5a6070;border:1.5px solid #2a2d3a;cursor:not-allowed;}
+.pab.playing{background:linear-gradient(135deg,#ff6b35,#ff4500);color:#fff;border:1.5px solid #ff6b35;}
+.pab.paused {background:linear-gradient(135deg,#c04000,#8a2000);color:#ffcca0;border:1.5px solid #c04000;}
+.pab-icon{font-size:16px;line-height:1;}
+.pab-icon.spin{display:inline-block;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.pulse{animation:pulse 1.2s ease infinite;}
+.cats{background:#16191f;display:flex;gap:7px;padding:8px 12px;border-bottom:1px solid #1e2230;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.cats::-webkit-scrollbar{display:none;}
+.cat-btn{flex-shrink:0;padding:6px 15px;border-radius:20px;border:1px solid #2a2d3a;background:#1e2130;color:#7a8090;font-size:12px;font-weight:500;font-family:'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .18s;}
+.cat-btn.active{background:linear-gradient(135deg,#ff6b35,#ff4500);border-color:#ff6b35;color:#fff;font-weight:700;}
+.player-bar{position:sticky;top:71px;z-index:90;background:#080f1a;border-bottom:1px solid #1a2535;max-height:0;overflow:hidden;transition:max-height .35s ease,padding .35s ease;padding:0 14px;}
+.player-bar.visible{max-height:150px;padding:10px 14px 12px;}
+.player-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:7px;}
+.player-now-label{font-size:9px;color:#3a6080;text-transform:uppercase;letter-spacing:1px;}
+.player-now-text{font-size:12px;color:#b0cce0;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:1;}
+.progress-track{height:3px;background:#1a2535;border-radius:2px;margin-bottom:9px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#ff6b35,#ff9060);border-radius:2px;width:0%;transition:width .5s linear;}
+.player-ctrls{display:flex;align-items:center;gap:7px;}
+.cbtn{border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:transform .1s;flex-shrink:0;}
+.cbtn:active{transform:scale(.88);}
+.c-prev,.c-next{width:34px;height:34px;background:#1a2535;color:#6a9ab8;font-size:15px;}
+.c-play{width:44px;height:44px;background:linear-gradient(135deg,#ff6b35,#ff4500);color:#fff;font-size:20px;box-shadow:0 2px 12px rgba(255,107,53,.4);}
+.c-stop{width:34px;height:34px;background:#1a1010;color:#cc5544;font-size:15px;}
+.speed-btn{font-size:11px;font-weight:700;color:#ff8855;background:#1a2535;border:1px solid #2a3f55;border-radius:6px;padding:4px 8px;cursor:pointer;}
+.player-count{font-size:11px;color:#3a5060;flex:1;text-align:right;}
+.content{padding:12px 14px 90px;}
+.stats{display:flex;gap:10px;margin-bottom:14px;padding:10px 14px;background:#1a1d27;border-radius:12px;border:1px solid #2a2d3a;}
+.stat{flex:1;text-align:center;}
+.stat-n{font-size:20px;font-weight:700;}
+.or{color:#ff6b35;}.gr{color:#2ed573;}.bl{color:#4a9eff;}
+.stat-l{font-size:10px;color:#5a6070;}
+.sdiv{width:1px;background:#2a2d3a;}
+.read-all-wrap{margin-bottom:12px;}
+.read-all-btn{width:100%;padding:11px 16px;border-radius:12px;background:#0e1c2c;border:1px solid #1e4060;color:#5ab0e0;font-family:'Be Vietnam Pro',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;}
+.read-all-btn.active{background:#1a0d00;border-color:#ff6b35;color:#ff9060;}
+.news-card{background:#16191f;border-radius:13px;border:1px solid #2a2d3a;padding:13px 14px;margin-bottom:11px;transition:border-color .2s,background .2s;animation:fadein .35s ease forwards;}
+.news-card.playing{border-color:#ff6b35;background:#1c1318;}
+.card-badges{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px;align-items:center;}
+.badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;}
+.b-high  {background:rgba(255,71,87,.14); color:#ff4757;border:1px solid rgba(255,71,87,.25);}
+.b-medium{background:rgba(255,165,2,.12); color:#ffa502;border:1px solid rgba(255,165,2,.2);}
+.b-low   {background:rgba(46,213,115,.12);color:#2ed573;border:1px solid rgba(46,213,115,.2);}
+.b-vne{background:rgba(74,158,255,.12);color:#4a9eff;}
+.b-tt {background:rgba(255,107,53,.12); color:#ff6b35;}
+.card-title{font-family:'Noto Serif',serif;font-size:15px;font-weight:700;color:#e8ddd0;line-height:1.42;margin-bottom:8px;}
+.card-body {font-size:12.5px;color:#8a9090;line-height:1.72;border-top:1px solid #2a2d3a;padding-top:9px;margin-bottom:10px;}
+.card-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.src-link{display:inline-flex;align-items:center;gap:5px;padding:7px 11px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Be Vietnam Pro',sans-serif;text-decoration:none;border:none;cursor:pointer;transition:opacity .15s;}
+.src-link:active{opacity:.75;}
+.lnk-vne{background:#ddeeff;color:#1255a0;}
+.lnk-tt {background:#fff0e0;color:#c85000;}
+.tts-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 11px;border-radius:8px;background:#0e1c2c;border:1px solid #1e3a55;color:#5ab0e0;font-size:12px;font-weight:700;font-family:'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .15s;}
+.tts-btn.active{background:#1a0d00;border-color:#ff6b35;color:#ff8850;}
+.loading-box{text-align:center;padding:70px 20px;}
+.spin-el{display:inline-block;animation:spin 1s linear infinite;}
+.ld-t{color:#ff6b35;font-size:14px;font-weight:600;margin-top:14px;}
+.ld-s{color:#505060;font-size:12px;margin-top:6px;}
+.fab{position:fixed;bottom:22px;right:18px;z-index:200;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ff6b35,#ff4500);border:none;cursor:pointer;font-size:21px;box-shadow:0 4px 18px rgba(255,107,53,.45);display:flex;align-items:center;justify-content:center;}
+.fab:active{transform:scale(.92);}
+.fab.busy{background:#2a2d3a;cursor:not-allowed;}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e3a25;color:#5ae87a;border:1px solid #2a6a3a;border-radius:20px;padding:9px 18px;font-size:12px;font-weight:600;font-family:'Be Vietnam Pro',sans-serif;z-index:999;opacity:0;pointer-events:none;transition:all .3s ease;white-space:nowrap;max-width:90vw;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+@keyframes fadein{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.footer{text-align:center;padding:18px 16px 28px;color:#3a3040;font-size:11px;font-family:'Be Vietnam Pro',sans-serif;letter-spacing:.5px;}
+.footer span{color:#5a4a50;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="hrow">
+    <div class="htw">
+      <div class="app-title">&#128240; Tin Tức <span class="rdot" id="rdot"></span></div>
+      <div class="app-sub">RobinSon &amp; AI</div>
+      <div class="last-upd" id="last-upd"></div>
+    </div>
+    <button class="pab idle" id="pab" onclick="handlePab()">
+      <span class="pab-icon" id="pab-icon">&#127911;</span>
+      <span id="pab-label">Nghe tất cả</span>
+    </button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="cats" id="cats"></div>
+<div class="player-bar" id="playerBar">
+  <div class="player-top"><div style="flex:1;min-width:0">
+    <div class="player-now-label">🔊 Đang đọc</div>
+    <div class="player-now-text" id="playerText">&#8212;</div>
+  </div></div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="player-ctrls">
+    <button class="cbtn c-prev" onclick="ttsPrev()">&#9198;</button>
+    <button class="cbtn c-play" id="playBtn" onclick="ttsToggle()">&#9654;</button>
+    <button class="cbtn c-next" onclick="ttsNext()">&#9197;</button>
+    <button class="cbtn c-stop" onclick="ttsStop()">&#9209;</button>
+    <button class="speed-btn" id="speedBtn" onclick="cycleSpeed()">1.0×</button>
+    <span class="player-count" id="playerCount"></span>
+  </div>
+</div>
+<div class="content" id="content">
+  <div class="loading-box"><span class="spin-el" style="font-size:34px">&#9881;&#65039;</span><div class="ld-t">Đang khởi động...</div></div>
+</div>
+<button class="fab" id="fab" onclick="manualRefresh()"><span id="fab-ic" style="display:inline-block">&#8635;</span></button>
+<script>
+/* ══════════════════════════════════════════
+   CẤU HÌNH
+══════════════════════════════════════════ */
+// Danh sách proxy — tự động thử lần lượt
+var PROXIES = [
+  function(u){ return "https://api.allorigins.win/get?url=" + encodeURIComponent(u); },
+  function(u){ return "https://api.allorigins.win/raw?url=" + encodeURIComponent(u); },
+  function(u){ return "https://corsproxy.io/?" + encodeURIComponent(u); },
+  function(u){ return "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(u); }
+];
+var LS_KEY      = "tintuc_v6";
+var REFRESH_MS  = 3 * 60 * 1000; // 3 phút
+var CATS = [
+  {id:"world",    icon:"🌍", label:"Thế Giới",   vne:"the-gioi",     tt:"the-gioi"},
+  {id:"vietnam",  icon:"🇻🇳", label:"Trong Nước", vne:"thoi-su",      tt:"chinh-tri-xa-hoi"},
+  {id:"sports",   icon:"⚽",  label:"Thể Thao",   vne:"the-thao",     tt:"the-thao"},
+  {id:"business", icon:"💼",  label:"Kinh Doanh", vne:"kinh-doanh",   tt:"kinh-doanh"},
+  {id:"health",   icon:"🏥",  label:"Sức Khỏe",   vne:"suc-khoe",     tt:"suc-khoe"}
+];
+
+var activeCat  = "world";
+var cache      = {};      // catId -> {items:[], ts}
+var refreshing = false;
+var retryTimers = {};
+
+/* ══════════════════════════════════════════
+   LOCALSTORAGE
+══════════════════════════════════════════ */
+function lsSave() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify({c:cache, t:Date.now()})); } catch(e) {}
+}
+function lsLoad() {
+  try {
+    var raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    var obj = JSON.parse(raw);
+    if (!obj || !obj.c) return false;
+    if (Date.now() - (obj.t||0) > 2*60*60*1000) return false; // hết hạn 2 giờ
+    cache = obj.c;
+    return true;
+  } catch(e) { return false; }
+}
+
+/* ══════════════════════════════════════════
+   UI HELPERS
+══════════════════════════════════════════ */
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function showToast(msg) {
+  var t = document.getElementById("toast");
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._tid);
+  t._tid = setTimeout(function(){ t.classList.remove("show"); }, 3000);
+}
+function setRdot(on) {
+  var d = document.getElementById("rdot");
+  if (d) d.className = "rdot" + (on ? " on" : "");
+}
+function setFab(busy) {
+  document.getElementById("fab").className = "fab" + (busy?" busy":"");
+  var ic = document.getElementById("fab-ic");
+  ic.textContent = "🔄"; ic.className = busy ? "spin-el" : "";
+}
+function setLastUpd(ts) {
+  var d = ts ? new Date(ts) : new Date();
+  document.getElementById("last-upd").textContent =
+    "⏱ " + d.toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+}
+function showLoading() {
+  document.getElementById("content").innerHTML =
+    '<div class="loading-box">' +
+    '<span class="spin-el" style="font-size:34px">⚙️</span>' +
+    '<div class="ld-t">Đang tải tin tức...</div>' +
+    '<div class="ld-s">Xin chờ một chút</div></div>';
+}
+function showRetrying(attempt, secs) {
+  document.getElementById("content").innerHTML =
+    '<div class="loading-box"><span style="font-size:34px">📡</span>' +
+    '<div class="ld-t">Thử lại lần ' + attempt + '...</div>' +
+    '<div class="ld-s">Tự động thử lại sau ' + secs + ' giây</div></div>';
+}
+
+/* ══════════════════════════════════════════
+   CATEGORIES
+══════════════════════════════════════════ */
+function renderCats() {
+  var html = "";
+  for (var i = 0; i < CATS.length; i++) {
+    var c = CATS[i];
+    html += '<button class="cat-btn' + (c.id===activeCat?" active":"") +
+            '" data-id="' + c.id + '">' + c.icon + ' ' + c.label + '</button>';
+  }
+  var bar = document.getElementById("cats");
+  bar.innerHTML = html;
+  var btns = bar.querySelectorAll(".cat-btn");
+  for (var j = 0; j < btns.length; j++) {
+    (function(btn){
+      btn.addEventListener("click", function(){ selectCat(this.getAttribute("data-id")); });
+    })(btns[j]);
+  }
+}
+function selectCat(id) {
+  if (tts.playing) ttsStop();
+  activeCat = id;
+  renderCats();
+  if (cache[id]) renderItems(cache[id]);
+  else { showLoading(); startLoad(id, 1); }
+}
+
+/* ══════════════════════════════════════════
+   FETCH RSS — thử lần lượt nhiều proxy
+══════════════════════════════════════════ */
+async function fetchRaw(url) {
+  for (var pi = 0; pi < PROXIES.length; pi++) {
+    try {
+      var proxyUrl = PROXIES[pi](url);
+      var r = await fetch(proxyUrl);
+      if (!r.ok) continue;
+      var ct = (r.headers.get("content-type") || "");
+      var xml = "";
+      if (ct.indexOf("application/json") > -1 || ct.indexOf("text/json") > -1) {
+        var j = await r.json();
+        xml = j.contents || j.body || j.data || "";
+      } else {
+        xml = await r.text();
+      }
+      if (xml && xml.length > 200 && xml.indexOf("<item") > -1) return xml;
+    } catch(e) { /* thử proxy tiếp */ }
+  }
+  return "";
+}
+
+function parseXML(xml, src) {
+  try {
+    var doc = new DOMParser().parseFromString(xml, "text/xml");
+    var nodes = doc.querySelectorAll("item");
+    var out = [];
+    for (var i = 0; i < Math.min(nodes.length, 15); i++) {
+      var el    = nodes[i];
+      var tEl   = el.querySelector("title");
+      var dEl   = el.querySelector("description");
+      var title = tEl ? tEl.textContent.replace(/<!\[CDATA\[|\]\]>/g,"").trim() : "";
+      var desc  = dEl ? dEl.textContent.replace(/<[^>]+>/g,"").replace(/<!\[CDATA\[|\]\]>/g,"").trim().slice(0,300) : "";
+      var link  = "";
+      var ch = el.childNodes;
+      for (var k = 0; k < ch.length; k++) {
+        if (ch[k].nodeName === "link") {
+          link = (ch[k].textContent||"").trim();
+          if (!link && ch[k].nextSibling) link = (ch[k].nextSibling.textContent||"").trim();
+          break;
+        }
+      }
+      if (!link) { var g = el.querySelector("guid"); if (g && (g.textContent||"").startsWith("http")) link = g.textContent.trim(); }
+      if (!link || !link.startsWith("http")) link = "";
+      if (title.length > 4) out.push({title:title, desc:desc, link:link, source:src});
+    }
+    return out;
+  } catch(e) { return []; }
+}
+
+async function fetchFeed(url, src) {
+  var xml = await fetchRaw(url);
+  if (!xml) return [];
+  return parseXML(xml, src);
+}
+
+/* ══════════════════════════════════════════
+   LOAD CAT — chỉ RSS, không AI
+══════════════════════════════════════════ */
+async function loadCatOnce(catId) {
+  var cat = null;
+  for (var i = 0; i < CATS.length; i++) { if (CATS[i].id === catId) { cat = CATS[i]; break; } }
+  if (!cat) return false;
+  try {
+    var vne = await fetchFeed("https://vnexpress.net/rss/" + cat.vne + ".rss", "VnExpress");
+    var tt  = await fetchFeed("https://tuoitre.vn/rss/"   + cat.tt  + ".rss", "Tuổi Trẻ");
+    var all = vne.concat(tt);
+    if (all.length === 0) return false;
+
+    // Dedup: bỏ tin có tiêu đề giống nhau (>70% chung từ)
+    var unique = [];
+    for (var i = 0; i < all.length; i++) {
+      var a = all[i];
+      var dup = false;
+      for (var j = 0; j < unique.length; j++) {
+        if (similar(a.title, unique[j].title)) { dup = true; break; }
+      }
+      if (!dup) unique.push(a);
+    }
+
+    cache[catId] = {items: unique, ts: Date.now()};
+    lsSave();
+    if (catId === activeCat) renderItems(cache[catId]);
+    return true;
+  } catch(e) { return false; }
+}
+
+// So sánh 2 tiêu đề có giống nhau không (dedup đơn giản)
+function similar(a, b) {
+  a = a.toLowerCase(); b = b.toLowerCase();
+  if (a === b) return true;
+  // nếu 1 cái chứa 80% kia thì coi là trùng
+  var shorter = a.length < b.length ? a : b;
+  var longer  = a.length < b.length ? b : a;
+  return longer.indexOf(shorter.slice(0, Math.floor(shorter.length*0.8))) > -1;
+}
+
+/* ══════════════════════════════════════════
+   RETRY khi thất bại
+══════════════════════════════════════════ */
+var DELAYS = [3000, 6000, 12000, 25000, 30000];
+function startLoad(catId, attempt) {
+  clearTimeout(retryTimers[catId]);
+  loadCatOnce(catId).then(function(ok) {
+    if (ok) return;
+    var wait = DELAYS[Math.min(attempt-1, DELAYS.length-1)];
+    if (catId === activeCat && !cache[catId]) showRetrying(attempt+1, Math.round(wait/1000));
+    retryTimers[catId] = setTimeout(function(){ startLoad(catId, attempt+1); }, wait);
+  });
+}
+
+/* ══════════════════════════════════════════
+   BG REFRESH — tuần tự
+══════════════════════════════════════════ */
+async function bgRefresh() {
+  if (refreshing) return;
+  refreshing = true; setRdot(true);
+  for (var i = 0; i < CATS.length; i++) {
+    await loadCatOnce(CATS[i].id);
+  }
+  refreshing = false; setRdot(false); setLastUpd(Date.now());
+}
+
+/* ══════════════════════════════════════════
+   RENDER TIN TỨC
+══════════════════════════════════════════ */
+function srcBadge(src) {
+  var cls = src === "VnExpress" ? "b-vne" : "b-tt";
+  return '<span class="badge ' + cls + '">' + esc(src) + '</span>';
+}
+
+function renderItems(data) {
+  var items = data.items || [];
+  var ts    = data.ts ? new Date(data.ts).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"}) : "--:--";
+
+  var html = '<div>'
+    + '<div class="stats">'
+    + '<div class="stat"><div class="stat-n or">' + items.length + '</div><div class="stat-l">Bài viết</div></div>'
+    + '<div class="sdiv"></div>'
+    + '<div class="stat"><div class="stat-n gr">2</div><div class="stat-l">Nguồn báo</div></div>'
+    + '<div class="sdiv"></div>'
+    + '<div class="stat"><div class="stat-n bl" style="font-size:13px">' + ts + '</div><div class="stat-l">Cập nhật</div></div>'
+    + '</div>'
+    + '<div class="read-all-wrap"><button class="read-all-btn" id="readAllBtn" onclick="ttsReadAll()">🔊 Nghe tất cả ' + items.length + ' tin</button></div>';
+
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var gid  = activeCat + "__" + i;
+    var lbtn = item.link
+      ? '<a class="src-link ' + (item.source==="VnExpress"?"lnk-vne":"lnk-tt") + '" href="' + esc(item.link) + '" target="_blank" rel="noopener">'
+        + (item.source==="VnExpress"?"🔵":"🟠") + ' ' + esc(item.source) + ' ↗</a>'
+      : '';
+    html += '<div class="news-card" id="card-' + gid + '">'
+      + '<div class="card-badges">' + srcBadge(item.source) + '</div>'
+      + '<div class="card-title">' + esc(item.title) + '</div>'
+      + '<div class="card-body">'  + esc(item.desc)  + '</div>'
+      + '<div class="card-actions">'
+      + '<button class="tts-btn" id="tts-' + gid + '" data-idx="' + i + '">🔊 Nghe</button>'
+      + lbtn
+      + '</div></div>';
+  }
+  html += '</div>';
+  document.getElementById("content").innerHTML = html;
+
+  // Gán sự kiện nghe cho từng nút
+  var btns = document.querySelectorAll(".tts-btn");
+  for (var bi = 0; bi < btns.length; bi++) {
+    (function(btn){
+      btn.addEventListener("click", function(){
+        ttsSingle(parseInt(this.getAttribute("data-idx")));
+      });
+    })(btns[bi]);
+  }
+  setLastUpd(data.ts);
+}
+
+/* ══════════════════════════════════════════
+   TTS ENGINE — Android-safe, chunked
+   Chia nhỏ mỗi tin thành các đoạn ≤100 ký tự
+   để tránh bị Android cắt giữa chừng
+══════════════════════════════════════════ */
+var tts = {
+  queue:[], cursor:-1,
+  chunks:[], chunkIdx:-1,
+  playing:false, paused:false,
+  speed:1.0, speedIdx:1, speeds:[0.8,1.0,1.25,1.5,1.75],
+  watchdog:null, lastPos:0
+};
+
+/* Lấy giọng tiếng Việt một lần */
+var _viVoice = null;
+function getViVoice() {
+  if (_viVoice) return _viVoice;
+  var voices = window.speechSynthesis.getVoices();
+  for (var i = 0; i < voices.length; i++) {
+    if (voices[i].lang === "vi-VN" || voices[i].lang.indexOf("vi") === 0) {
+      _viVoice = voices[i]; return _viVoice;
+    }
+  }
+  return null;
+}
+window.speechSynthesis.onvoiceschanged = function(){ _viVoice = null; getViVoice(); };
+
+/* Không chia chunk — phát nguyên văn để tự nhiên */
+
+function buildAllQueue() {
+  var q = [];
+  for (var ci = 0; ci < CATS.length; ci++) {
+    var cat = CATS[ci]; var d = cache[cat.id];
+    if (!d || !d.items || !d.items.length) continue;
+    q.push({gid:null, catId:cat.id, catLabel:cat.label, title:"Mục: "+cat.label, text:"Mục "+cat.label+"."});
+    for (var ii = 0; ii < d.items.length; ii++) {
+      var item = d.items[ii];
+      q.push({gid:cat.id+"__"+ii, catId:cat.id, catLabel:cat.label,
+              title:item.title||"", text:(item.title||"")+". "+(item.desc||"")});
+    }
+  }
+  return q;
+}
+function getCatItems() { var d = cache[activeCat]; return (d && d.items) ? d.items : []; }
+
+function ttsReadAll() {
+  var items = getCatItems(); if (!items.length) return;
+  var q = items.map(function(it,i){ return {gid:activeCat+"__"+i,catId:activeCat,catLabel:"",title:it.title||"",text:(it.title||"")+". "+(it.desc||"")}; });
+  tts.queue = q; tts.cursor = 0; _ttsStart();
+}
+function ttsSingle(idx) {
+  var items = getCatItems(); if (!items[idx]) return;
+  var q = items.map(function(it,i){ return {gid:activeCat+"__"+i,catId:activeCat,catLabel:"",title:it.title||"",text:(it.title||"")+". "+(it.desc||"")}; });
+  tts.queue = q; tts.cursor = idx; _ttsStart();
+}
+
+function _ttsStart() {
+  window.speechSynthesis.cancel();
+  clearInterval(tts.watchdog);
+  tts.playing = true; tts.paused = false;
+  _loadItem(tts.cursor);
+}
+
+/* Load item và phát ngay — không chia chunk */
+function _loadItem(cursor) {
+  if (cursor < 0 || cursor >= tts.queue.length) { ttsStop(); return; }
+  tts.cursor = cursor;
+  var item = tts.queue[cursor];
+  if (item.catId && item.catId !== activeCat && item.gid) {
+    activeCat = item.catId; renderCats();
+    if (cache[activeCat]) renderItems(cache[activeCat]);
+  }
+  _highlightCard(item.gid); _updateBar(item);
+  tts.chunks = [item.text]; // một chunk duy nhất = toàn bộ text
+  tts.chunkIdx = 0;
+  _speakChunk();
+}
+
+/* Phát utterance — không có khoảng ngừng giữa các tin */
+function _speakChunk() {
+  if (!tts.playing || tts.paused) return;
+  if (tts.chunkIdx >= tts.chunks.length) {
+    _loadItem(tts.cursor + 1); return;
+  }
+  var text = tts.chunks[tts.chunkIdx];
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang = "vi-VN"; u.rate = tts.speed; u.pitch = 1.0;
+  var v = getViVoice(); if (v) u.voice = v;
+
+  u.onend = function() {
+    clearInterval(tts.watchdog);
+    if (!tts.playing || tts.paused) return;
+    tts.chunkIdx++;
+    _speakChunk();
+  };
+  u.onerror = function(e) {
+    clearInterval(tts.watchdog);
+    if (e.error === "interrupted" || e.error === "canceled") return;
+    tts.chunkIdx++;
+    _speakChunk();
+  };
+
+  window.speechSynthesis.cancel(); // dọn sạch trước khi phát
+  setTimeout(function() {          // delay 0ms để Android kịp xử lý cancel
+    if (!tts.playing || tts.paused) return;
+    window.speechSynthesis.speak(u);
+    tts.lastPos = Date.now();
+
+    /* Watchdog: phát hiện Android tắt bất ngờ */
+    clearInterval(tts.watchdog);
+    tts.watchdog = setInterval(function() {
+      if (!tts.playing || tts.paused) { clearInterval(tts.watchdog); return; }
+      var age = Date.now() - tts.lastPos;
+      if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending && age > 1500) {
+        clearInterval(tts.watchdog);
+        // Bị dừng bất ngờ → phát lại ngay
+        window.speechSynthesis.cancel();
+        setTimeout(function(){
+          if (tts.playing && !tts.paused) _speakChunk();
+        }, 50);
+      }
+    }, 1000);
+  }, 0);
+}
+
+function ttsToggle() {
+  if (!tts.playing) {
+    if (tts.queue.length && tts.cursor >= 0) {
+      tts.playing = true; tts.paused = false; _speakChunk();
+    }
+    return;
+  }
+  if (tts.paused) {
+    tts.paused = false;
+    // Samsung resume không ổn định → cancel + phát lại
+    clearInterval(tts.watchdog);
+    window.speechSynthesis.cancel();
+    setTimeout(function(){
+      if (tts.playing && !tts.paused) _speakChunk();
+    }, 50);
+    document.getElementById("playBtn").textContent = "⏸"; setPab("playing");
+  } else {
+    tts.paused = true;
+    clearInterval(tts.watchdog);
+    window.speechSynthesis.cancel();
+    document.getElementById("playBtn").textContent = "▶"; setPab("paused");
+  }
+}
+function ttsNext() {
+  if (!tts.playing) return;
+  clearInterval(tts.watchdog);
+  window.speechSynthesis.cancel();
+  _loadItem(tts.cursor + 1);
+}
+function ttsPrev() {
+  if (!tts.playing) return;
+  clearInterval(tts.watchdog);
+  window.speechSynthesis.cancel();
+  _loadItem(Math.max(0, tts.cursor - 1));
+}
+function ttsStop() {
+  clearInterval(tts.watchdog);
+  window.speechSynthesis.cancel();
+  tts.playing=false; tts.paused=false; tts.cursor=-1; tts.queue=[]; tts.chunks=[]; tts.chunkIdx=-1;
+  document.getElementById("playerBar").classList.remove("visible");
+  document.querySelectorAll(".news-card.playing").forEach(function(el){ el.classList.remove("playing"); });
+  document.querySelectorAll(".tts-btn.active").forEach(function(el){ el.classList.remove("active"); el.textContent="🔊 Nghe"; });
+  document.getElementById("progressFill").style.width="0%";
+  var rab=document.getElementById("readAllBtn"); if(rab) rab.classList.remove("active");
+  document.getElementById("playBtn").textContent="▶";
+  setPab("idle");
+}
+function _highlightCard(gid){
+  document.querySelectorAll(".news-card").forEach(function(el){ el.classList.remove("playing"); });
+  document.querySelectorAll(".tts-btn").forEach(function(el){ el.classList.remove("active"); el.textContent="🔊 Nghe"; });
+  if (!gid) return;
+  var card=document.getElementById("card-"+gid);
+  if(card){ card.classList.add("playing"); card.scrollIntoView({behavior:"smooth",block:"nearest"}); }
+  var btn=document.getElementById("tts-"+gid);
+  if(btn){ btn.classList.add("active"); btn.textContent="⏸ Đang đọc..."; }
+  document.getElementById("playBtn").textContent="⏸";
+}
+function _updateBar(item){
+  document.getElementById("playerBar").classList.add("visible");
+  document.getElementById("playerText").textContent=(item.catLabel?"["+item.catLabel+"] ":"")+item.title;
+  var tot=tts.queue.length;
+  document.getElementById("playerCount").textContent=tot>1?(tts.cursor+1)+"/"+tot:"";
+  document.getElementById("progressFill").style.width=(tot>1?Math.round((tts.cursor/(tot-1))*100):0)+"%";
+  var rab=document.getElementById("readAllBtn"); if(rab) rab.className="read-all-btn active";
+  setPab("playing");
+}
+function cycleSpeed(){
+  tts.speedIdx=(tts.speedIdx+1)%tts.speeds.length; tts.speed=tts.speeds[tts.speedIdx];
+  document.getElementById("speedBtn").textContent=tts.speed.toFixed(1)+"x";
+  if(tts.playing&&!tts.paused){ clearInterval(tts.watchdog); window.speechSynthesis.cancel(); setTimeout(_speakChunk,200); }
+}
+
+/* ══════════════════════════════════════════
+   PLAY-ALL BUTTON (header)
+══════════════════════════════════════════ */
+function setPab(state){
+  var btn=document.getElementById("pab"), icon=document.getElementById("pab-icon"), lbl=document.getElementById("pab-label");
+  if(!btn) return;
+  btn.className="pab "+state;
+  if(state==="idle")   { icon.textContent="🎧"; icon.className="pab-icon"; lbl.textContent="Nghe tất cả"; }
+  if(state==="loading"){ icon.textContent="⚙️"; icon.className="pab-icon spin-el"; lbl.textContent="Đang tải..."; }
+  if(state==="playing"){ icon.textContent="⏸"; icon.className="pab-icon"; lbl.textContent="Đang phát..."; }
+  if(state==="paused") { icon.textContent="▶"; icon.className="pab-icon"; lbl.textContent="Tiếp tục"; }
+}
+async function handlePab(){
+  if(tts.playing){ ttsToggle(); return; }
+  if(tts.paused) { ttsToggle(); return; }
+  var missing=[];
+  for(var i=0;i<CATS.length;i++){ if(!cache[CATS[i].id]) missing.push(CATS[i]); }
+  if(missing.length){
+    setPab("loading");
+    for(var mi=0;mi<missing.length;mi++) await loadCatOnce(missing[mi].id);
+  }
+  var q=buildAllQueue();
+  if(!q.length){ showToast("Chưa có tin tức."); setPab("idle"); return; }
+  tts.queue=q; tts.cursor=0; tts.playing=true; _ttsStart();
+}
+
+/* ══════════════════════════════════════════
+   MANUAL REFRESH
+══════════════════════════════════════════ */
+async function manualRefresh(){
+  if(refreshing) return;
+  setFab(true);
+  for(var i=0;i<CATS.length;i++) await loadCatOnce(CATS[i].id);
+  setFab(false); setLastUpd(Date.now()); showToast("Đã làm mới xong!");
+}
+
+/* ══════════════════════════════════════════
+   KHỞI ĐỘNG
+══════════════════════════════════════════ */
+function init(){
+  renderCats();
+  var had = lsLoad();
+  if (had && cache[activeCat]) {
+    // Có cache → hiện ngay
+    renderItems(cache[activeCat]);
+    setLastUpd(cache[activeCat].ts);
+    showToast("Đang làm mới...");
+    setTimeout(bgRefresh, 500);
+  } else {
+    // Chưa có → load cat đang xem trước
+    showLoading();
+    startLoad(activeCat, 1);
+    // Load các cat khác sau, cách nhau 2s
+    var others = [];
+    for(var i=0;i<CATS.length;i++){ if(CATS[i].id!==activeCat) others.push(CATS[i].id); }
+    setTimeout(function(){
+      var d=0;
+      for(var i=0;i<others.length;i++){
+        (function(id,delay){ setTimeout(function(){ loadCatOnce(id); }, delay); })(others[i], d);
+        d += 2000;
+      }
+    }, 5000);
+  }
+  setInterval(bgRefresh, REFRESH_MS);
+}
+init();
+</script>
+
+
+<div class="footer">Tác giả <span>RobinSon</span> · Tin tức Việt Nam</div>
+</body>
+</html>

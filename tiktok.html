@@ -1,0 +1,12 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RobinAgent — nối TikTok</title>
+<style>body{font:16px/1.6 system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 16px;color:#222;background:#fff}code,textarea{font:14px/1.4 ui-monospace,Menlo,monospace}textarea{width:100%;height:120px;padding:10px;border:1px solid #ccc;border-radius:8px}button{font-size:16px;padding:10px 18px;border:0;border-radius:8px;background:#111;color:#fff}.ok{color:#0a7a2f}.err{color:#b00020}</style></head>
+<body><h1>RobinAgent — nối tài khoản TikTok</h1>
+<div id="s"></div>
+<script>
+const q = new URLSearchParams(location.search); const code = q.get('code'), err = q.get('error'), st = q.get('state') || '';
+const s = document.getElementById('s');
+if (err) s.innerHTML = '<p class="err">TikTok từ chối: ' + err + ' — ' + (q.get('error_description') || '') + '</p>';
+else if (code) { const line = 'node tiktok/setup.js ' + (st ? st + ' ' : '') + 'paste ' + code;
+  s.innerHTML = '<p class="ok">✅ Đã nhận mã từ TikTok.</p><p>Dán dòng này vào Terminal (trong thư mục RobinAgent), rồi Enter:</p><textarea id="t" readonly>' + line + '</textarea><p><button onclick="navigator.clipboard.writeText(document.getElementById(\'t\').value).then(()=>this.textContent=\'Đã copy\')">Copy</button></p><p>Mã chỉ dùng được 1 lần, trong vài phút.</p>';
+} else s.innerHTML = '<p>Trang này chỉ dùng để nhận mã đăng nhập TikTok cho RobinAgent. Chạy <code>node tiktok/setup.js news</code> trên máy để bắt đầu.</p>';
+</script></body></html>

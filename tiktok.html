@@ -6,7 +6,7 @@
 const q = new URLSearchParams(location.search); const code = q.get('code'), err = q.get('error'), st = q.get('state') || '';
 const s = document.getElementById('s');
 if (err) s.innerHTML = '<p class="err">TikTok từ chối: ' + err + ' — ' + (q.get('error_description') || '') + '</p>';
-else if (code) { const line = 'node tiktok/setup.js ' + (st ? st + ' ' : '') + 'paste ' + code;
+else if (code) { const line = 'node tiktok/setup.js ' + (st ? st + ' ' : '') + "paste '" + code + "'"; // bọc nháy đơn: mã TikTok có * và ! (zsh hiểu nhầm)
   s.innerHTML = '<p class="ok">✅ Đã nhận mã từ TikTok.</p><p>Dán dòng này vào Terminal (trong thư mục RobinAgent), rồi Enter:</p><textarea id="t" readonly>' + line + '</textarea><p><button onclick="navigator.clipboard.writeText(document.getElementById(\'t\').value).then(()=>this.textContent=\'Đã copy\')">Copy</button></p><p>Mã chỉ dùng được 1 lần, trong vài phút.</p>';
 } else s.innerHTML = '<p>Trang này chỉ dùng để nhận mã đăng nhập TikTok cho RobinAgent. Chạy <code>node tiktok/setup.js news</code> trên máy để bắt đầu.</p>';
 </script></body></html>

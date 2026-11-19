@@ -1,1 +1,69 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RobinStock AI — Phân tích kỹ thuật cổ phiếu HOSE</title>
+<meta name="description" content="Trả phí cho AI phân tích kỹ thuật một mã cổ phiếu HOSE: báo cáo PDF 10 mục (xu hướng, mốc giá, Wyckoff, Ichimoku, động lượng, khối lượng, kịch bản), gửi về email trong vài phút.">
+<style>
+:root{--bg:#0b1220;--card:#121c31;--line:#22304d;--t:#e8eefc;--m:#9fb0d0;--acc:#f5b63c;--ok:#2fd27a;--bad:#ff6b6b;--blue:#4c8dff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:16px/1.6 "Be Vietnam Pro",system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:28px 16px 60px}h1{font-size:28px;line-height:1.25;margin:8px 0 6px}h1 b{color:var(--acc)}.sub{color:var(--m);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin:14px 0}
+label{display:block;font-size:13px;color:var(--m);margin:10px 0 4px}input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:#0e172a;color:var(--t);font-size:17px}input:focus{outline:2px solid var(--blue)}
+.row{display:grid;grid-template-columns:1fr 2fr;gap:12px}@media(max-width:480px){.row{grid-template-columns:1fr}}
+.btn{display:block;width:100%;margin-top:16px;padding:14px;border:0;border-radius:12px;background:var(--acc);color:#1a1200;font-weight:700;font-size:17px;cursor:pointer}.btn:disabled{opacity:.5;cursor:default}
+.pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#1b2740;color:var(--m);font-size:13px;margin:2px 4px 2px 0}
+.price{font-size:22px;font-weight:700;color:var(--acc)}.ok{color:var(--ok)}.bad{color:var(--bad)}.m{color:var(--m);font-size:14px}
+.qr{display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:start}@media(max-width:520px){.qr{grid-template-columns:1fr}}.qr img{width:100%;border-radius:12px;background:#fff}
+.kv{font-size:15px}.kv b{color:var(--t)}.kv div{margin:4px 0}.copy{cursor:pointer;border:1px dashed var(--line);padding:2px 8px;border-radius:6px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}@media(max-width:520px){.steps{grid-template-columns:1fr}}.steps div{background:#0e172a;border-radius:12px;padding:12px;font-size:14px}.steps b{display:block;color:var(--acc);font-size:20px}
+ul{padding-left:20px;margin:6px 0}li{margin:3px 0}a{color:var(--blue)}.sw{display:flex;gap:8px;margin-top:10px}.sw button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:#0e172a;color:var(--t);cursor:pointer}.sw button.on{border-color:var(--acc);color:var(--acc)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--m);border-top-color:transparent;border-radius:50%;animation:r 1s linear infinite;vertical-align:middle;margin-right:6px}@keyframes r{to{transform:rotate(360deg)}}
+footer{color:var(--m);font-size:12px;margin-top:30px;line-height:1.5}
+</style></head><body><div class="wrap">
+<h1>AI phân tích kỹ thuật <b>cổ phiếu HOSE</b> — PDF gửi về email</h1>
+<p class="sub">Nhập mã, trả phí token AI, nhận báo cáo 10 mục trong vài phút. Dữ liệu ≥ 6 năm giá điều chỉnh, 30+ chỉ báo, biểu đồ nến.</p>
 
+<div class="card" id="form">
+  <div class="sw"><button class="on" id="swOne" onclick="mode('one')">1 mã cổ phiếu</button><button id="swPack" onclick="mode('pack')">Gói 5 lượt (tiết kiệm 20%)</button></div>
+  <div class="row" id="rowOne"><div><label>Mã cổ phiếu (HOSE)</label><input id="code" maxlength="3" placeholder="SSI" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:2px;font-weight:700"></div><div><label>Email nhận báo cáo</label><input id="email" type="email" placeholder="ban@gmail.com" autocomplete="email"></div></div>
+  <div id="rowPack" style="display:none"><label>Email nhận mã 5 lượt</label><input id="emailPack" type="email" placeholder="ban@gmail.com" autocomplete="email"></div>
+  <label id="lblCoupon">Mã ưu đãi (nếu có)</label><input id="coupon" placeholder="RS5-XXXX" style="text-transform:uppercase">
+  <p style="margin:14px 0 0">Chi phí token AI: <span class="price" id="price">…</span> <span class="m" id="priceNote"></span></p>
+  <button class="btn" id="go" onclick="order()">Để AI phân tích →</button>
+  <p class="bad" id="err"></p>
+</div>
+
+<div class="card" id="pay" style="display:none">
+  <h3 style="margin:0 0 8px">Đơn <span id="oid"></span> — quét mã để trả phí</h3>
+  <div class="qr"><img id="qrimg" alt="VietQR"><div class="kv">
+    <div>Ngân hàng: <b id="bankName"></b></div><div>Số TK: <b id="bankAcc"></b></div><div>Chủ TK: <b id="bankOwner"></b></div>
+    <div>Số tiền: <b id="amt"></b></div><div>Nội dung CK: <b class="copy" id="content" onclick="cp(this)" title="bấm để copy"></b> <span class="m">(bắt buộc đúng)</span></div>
+    <p class="m" style="margin-top:10px"><span class="spin"></span>Đang chờ tiền về… hệ thống tự nhận trong ~5–30 giây sau khi chuyển. Không cần tải lại trang.</p></div></div>
+</div>
+
+<div class="card" id="done" style="display:none"><h3 id="doneTitle" style="margin:0 0 8px"></h3><p id="doneBody"></p></div>
+
+<div class="card"><div class="steps"><div><b>1</b>Nhập mã + email</div><div><b>2</b>Quét VietQR trả phí token AI</div><div><b>3</b>AI phân tích 2–4 phút → PDF về email</div></div></div>
+
+<div class="card"><h3 style="margin:0 0 6px">Trong báo cáo có gì</h3>
+<ul><li><b>01 Kết luận</b> — xu hướng chính, trạng thái, điều cần làm theo vị thế</li><li><b>02–03</b> Cấu trúc xu hướng (đỉnh/đáy, MA, kênh) · Wyckoff (pha, nỗ lực vs kết quả, spring/upthrust)</li><li><b>04</b> Mốc giá: hỗ trợ/kháng cự, Volume Profile (POC/VA), VWAP neo, Fibonacci, gap</li><li><b>05–06</b> Động lượng (RSI, MACD, Stoch, ADX, Ichimoku) · Khối lượng & dòng tiền (OBV, CMF, đột biến)</li><li><b>07–09</b> Mẫu hình nến · Bối cảnh cơ bản (P/E, P/B, ROE, EPS) · Kịch bản tăng/giảm & mốc kích hoạt</li><li><b>10</b> Lời khuyên theo vị thế (đang giữ / đứng ngoài / lướt) + phụ lục bảng số kỹ thuật</li></ul>
+<p class="m">Xem mẫu: <a id="sample" href="#" target="_blank">PDF mẫu</a> · Giá điều chỉnh từ VNDirect · AI viết lời bình từ số liệu, có đối chiếu số.</p></div>
+
+<footer>Dịch vụ cung cấp <b>công cụ phân tích kỹ thuật tự động bằng AI</b> dựa trên dữ liệu giá lịch sử công khai. Nội dung báo cáo không phải là khuyến nghị đầu tư, không phải tư vấn tài chính; không đảm bảo lợi nhuận. Người dùng tự chịu trách nhiệm với quyết định của mình. Phí thu là chi phí tính toán/token AI, không hoàn lại sau khi báo cáo đã gửi. Liên hệ: <span id="contact"></span></footer>
+</div>
+<script>
+const API = new URLSearchParams(location.search).get('api') || 'https://dolls-arizona-brass-seminar.trycloudflare.com';
+const $ = (i) => document.getElementById(i); let M = 'one', CFG = {}, cur = null, timer = null;
+function mode(m) { M = m; $('swOne').classList.toggle('on', m === 'one'); $('swPack').classList.toggle('on', m === 'pack'); $('rowOne').style.display = m === 'one' ? '' : 'none'; $('rowPack').style.display = m === 'pack' ? '' : 'none'; $('coupon').style.display = $('lblCoupon').style.display = m === 'one' ? '' : 'none'; showPrice(); }
+function showPrice() { if (!CFG.price) return; $('price').textContent = (M === 'one' ? CFG.price : CFG.pack5).toLocaleString('vi-VN') + 'đ'; $('priceNote').textContent = M === 'one' ? '/ 1 mã' : '/ 5 lượt (' + Math.round(CFG.pack5 / 5).toLocaleString('vi-VN') + 'đ mỗi lượt, dùng trong 30 ngày)'; }
+fetch(API + '/shop/config').then((r) => r.json()).then((c) => { CFG = c; showPrice(); if (c.sampleUrl) $('sample').href = c.sampleUrl; else $('sample').textContent = 'PDF mẫu (đang cập nhật)'; $('contact').textContent = (c.contact || ''); try { const o = JSON.parse(localStorage.getItem('rs_order') || 'null'); if (o && Date.now() - o.at < 2 * 3600000) resume(o.id); } catch {} }).catch(() => { $('price').textContent = '—'; $('err').textContent = 'Không kết nối được máy chủ phân tích. Thử lại sau ít phút.'; });
+async function order() { $('err').textContent = ''; const body = M === 'one' ? { code: $('code').value.trim().toUpperCase(), email: $('email').value.trim(), coupon: $('coupon').value.trim().toUpperCase() || undefined } : { pack: true, email: $('emailPack').value.trim() };
+  if (M === 'one' && !/^[A-Z]{3}$/.test(body.code)) return $('err').textContent = 'Mã cổ phiếu gồm 3 chữ cái, ví dụ SSI, HPG, FPT.'; if (!/^\S+@\S+\.\S+$/.test(body.email)) return $('err').textContent = 'Email chưa đúng.';
+  $('go').disabled = true; $('go').textContent = 'Đang tạo đơn…'; try { const r = await fetch(API + '/shop/order', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }); const o = await r.json(); if (!r.ok || o.error) throw new Error(o.error || 'lỗi'); try { localStorage.setItem('rs_order', JSON.stringify({ id: o.id, at: Date.now() })); } catch {} show(o); } catch (e) { $('err').textContent = e.message; } finally { $('go').disabled = false; $('go').textContent = 'Để AI phân tích →'; } }
+function resume(id) { fetch(API + '/shop/order/' + id).then((r) => r.json()).then((o) => { if (o && o.id && o.status !== 'failed') show(o); }).catch(() => {}); }
+function show(o) { cur = o; $('form').style.display = 'none'; if (o.status === 'pending' && o.qr) { $('pay').style.display = ''; $('done').style.display = 'none'; $('oid').textContent = o.id; $('qrimg').src = o.qr; $('bankName').textContent = (o.bank && o.bank.bankName) || ''; $('bankAcc').textContent = (o.bank && o.bank.account) || ''; $('bankOwner').textContent = (o.bank && o.bank.name) || ''; $('amt').textContent = o.amount.toLocaleString('vi-VN') + 'đ'; $('content').textContent = o.content; poll(); return; }
+  $('pay').style.display = 'none'; $('done').style.display = ''; if (o.status === 'paid') { $('doneTitle').innerHTML = '<span class="spin"></span>Đã nhận phí — AI đang phân tích ' + (o.code || '') ; $('doneBody').innerHTML = (o.queue > 0 ? 'Đơn của bạn đứng thứ ' + o.queue + ' trong hàng. ' : '') + 'Mất khoảng 2–4 phút. Báo cáo sẽ gửi tới <b>' + o.email + '</b>; bạn có thể đóng trang này, hoặc chờ link tải hiện ở đây.'; poll(); }
+  else if (o.status === 'done') { clearTimeout(timer); try { localStorage.removeItem('rs_order'); } catch {} if (o.coupon) { $('doneTitle').innerHTML = '<span class="ok">✅ Mã 5 lượt của bạn: ' + o.coupon + '</span>'; $('doneBody').innerHTML = 'Đã gửi tới <b>' + o.email + '</b>. Mỗi lần phân tích: nhập mã cổ phiếu + email + mã này ở ô "Mã ưu đãi". <br><br><a href="' + location.pathname + '">← Phân tích mã đầu tiên</a>'; } else { $('doneTitle').innerHTML = '<span class="ok">✅ Xong — báo cáo ' + o.code + ' đã gửi tới ' + o.email + '</span>'; $('doneBody').innerHTML = (o.download ? '<a href="' + o.download + '"><b>Tải PDF ngay</b></a> (link hết hạn sau 7 ngày) · ' : '') + 'Không thấy email? Kiểm tra mục Spam/Quảng cáo. <br><br><a href="' + location.pathname + '">← Phân tích mã khác</a>'; } }
+  else if (o.status === 'failed') { clearTimeout(timer); $('doneTitle').innerHTML = '<span class="bad">AI gặp lỗi khi phân tích ' + o.code + '</span>'; $('doneBody').textContent = 'Phí của bạn được ghi nhận, quản trị viên đã được báo và sẽ gửi báo cáo tới ' + o.email + ' trong vòng 30 phút.'; } }
+function poll() { clearTimeout(timer); timer = setTimeout(() => fetch(API + '/shop/order/' + cur.id).then((r) => r.json()).then((o) => { if (o.status !== cur.status || o.download) show(o); else poll(); }).catch(poll), 5000); }
+function cp(el) { navigator.clipboard && navigator.clipboard.writeText(el.textContent).then(() => { const t = el.textContent; el.textContent = 'đã copy'; setTimeout(() => (el.textContent = t), 1200); }); }
+$('code').addEventListener('input', (e) => (e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3)));
+</script></body></html>
